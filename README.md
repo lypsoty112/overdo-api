@@ -33,6 +33,7 @@ Run `bun run migrate` in `overdo-db` first.
 | POST | `/pomodoros/:id/stop` | Stop a session; a full-length one pays 1 XP per minute |
 | POST | `/moods` | Log a mood (`ecstatic` / `fine` / `meh` / `drained` / `feral`, optional `taskId`) |
 | GET | `/stats` | XP, level, streak, today's totals and the procrastination index |
+| GET | `/horoscope` | Today's task horoscope; the same for everyone until midnight UTC |
 
 ## XP
 
