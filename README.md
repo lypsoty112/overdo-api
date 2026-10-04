@@ -18,7 +18,13 @@ Run `bun run migrate` in `overdo-db` first.
 | Method | Path | Does |
 | --- | --- | --- |
 | GET | `/health` | Liveness |
-| GET | `/tasks` | Every live task |
+| GET | `/tasks` | Every live task, with its subtasks and tags |
 | POST | `/tasks` | Create a task (`title`, optional `notes`, `priority` 1–4, `energy`, `dueOn`) |
 | PATCH | `/tasks/:id` | Update any task field, including `status` (`todo` / `doing` / `done`) |
 | DELETE | `/tasks/:id` | Soft-delete a task |
+| POST | `/tasks/:id/subtasks` | Add a subtask (`title`) |
+| PATCH | `/subtasks/:id` | Rename or toggle a subtask (`title`, `done`) |
+| DELETE | `/subtasks/:id` | Delete a subtask |
+| GET | `/tags` | Every tag ever used |
+| POST | `/tasks/:id/tags` | Tag a task (`name`); creates the tag on first use |
+| DELETE | `/tasks/:id/tags/:tagId` | Untag a task |

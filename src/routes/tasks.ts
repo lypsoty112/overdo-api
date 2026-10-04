@@ -1,6 +1,7 @@
 // Task CRUD: listTasks, createTask, updateTask and deleteTask. Every response goes through selectTasks,
-// so all four return the same camelCase shape. toColumns maps a validated body onto snake_case columns,
-// dropping absent fields so a PATCH only touches what it names. Deletes are soft (deleted_at).
+// so all four return the same camelCase shape, subtasks and tags folded in as JSON arrays. toColumns maps
+// a validated body onto snake_case columns, dropping absent fields so a PATCH only touches what it names.
+// Deletes are soft (deleted_at); liveTaskExists is the check other routes run before writing to a task.
 import type postgres from "postgres";
 import { z } from "zod";
 import { sql } from "../db";
@@ -37,10 +38,23 @@ function selectTasks(where: postgres.Fragment) {
     SELECT t.id, t.title, t.notes, t.status, t.priority, t.energy,
       to_char(t.due_on, 'YYYY-MM-DD') AS "dueOn",
       t.created_at AS "createdAt",
-      t.completed_at AS "completedAt"
+      t.completed_at AS "completedAt",
+      COALESCE((
+        SELECT json_agg(json_build_object('id', s.id, 'title', s.title, 'done', s.done) ORDER BY s.created_at)
+        FROM subtasks s WHERE s.task_id = t.id
+      ), '[]') AS subtasks,
+      COALESCE((
+        SELECT json_agg(json_build_object('id', g.id, 'name', g.name, 'color', g.color) ORDER BY g.name)
+        FROM task_tags tt JOIN tags g ON g.id = tt.tag_id WHERE tt.task_id = t.id
+      ), '[]') AS tags
     FROM tasks t
     WHERE t.deleted_at IS NULL AND ${where}
     ORDER BY t.created_at`;
+}
+
+export async function liveTaskExists(id: string): Promise<boolean> {
+  const rows = await sql`SELECT 1 FROM tasks WHERE id = ${id} AND deleted_at IS NULL`;
+  return rows.length > 0;
 }
 
 export async function listTasks(): Promise<Response> {

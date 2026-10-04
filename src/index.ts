@@ -2,6 +2,8 @@
 // path and method to a handler in routes/. The error handler turns Postgres rejecting a malformed id
 // into a 400 rather than a 500; anything else is logged and returned as a 500.
 import postgres from "postgres";
+import { createSubtask, deleteSubtask, updateSubtask } from "./routes/subtasks";
+import { addTag, listTags, removeTag } from "./routes/tags";
 import { createTask, deleteTask, listTasks, updateTask } from "./routes/tasks";
 
 const port = Number(process.env.PORT ?? 3700);
@@ -17,6 +19,22 @@ Bun.serve({
     "/tasks/:id": {
       PATCH: (req) => updateTask(req, req.params.id),
       DELETE: (req) => deleteTask(req.params.id),
+    },
+    "/tasks/:id/subtasks": {
+      POST: (req) => createSubtask(req, req.params.id),
+    },
+    "/subtasks/:id": {
+      PATCH: (req) => updateSubtask(req, req.params.id),
+      DELETE: (req) => deleteSubtask(req.params.id),
+    },
+    "/tags": {
+      GET: () => listTags(),
+    },
+    "/tasks/:id/tags": {
+      POST: (req) => addTag(req, req.params.id),
+    },
+    "/tasks/:id/tags/:tagId": {
+      DELETE: (req) => removeTag(req.params.id, req.params.tagId),
     },
   },
   fetch() {
