@@ -1,6 +1,8 @@
 // The daily task horoscope: getHoroscope picks a sign, a reading, a lucky priority and a thing to avoid
-// from fixed lists. seed hashes the date with a salt per field, so everyone gets the same nonsense all
-// day, new nonsense tomorrow, and the fields do not move in lockstep.
+// from fixed lists, seeded by the date, so everyone gets the same nonsense all day and new nonsense
+// tomorrow.
+import { pick, seed } from "../seeded";
+
 const SIGNS = [
   "The Overcommitter",
   "The Snoozer",
@@ -35,14 +37,6 @@ const AVOID = [
   "the phrase 'quick question'",
   "colour-coding anything",
 ];
-
-function seed(date: string, salt: number): number {
-  return [...`${date}:${salt}`].reduce((hash, char) => (hash * 31 + char.charCodeAt(0)) >>> 0, 7);
-}
-
-function pick<T>(items: T[], date: string, salt: number): T | undefined {
-  return items[seed(date, salt) % items.length];
-}
 
 export function getHoroscope(): Response {
   const date = new Date().toISOString().slice(0, 10);

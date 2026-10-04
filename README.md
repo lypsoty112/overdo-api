@@ -18,7 +18,7 @@ Run `bun run migrate` in `overdo-db` first.
 | Method | Path | Does |
 | --- | --- | --- |
 | GET | `/health` | Liveness |
-| GET | `/tasks` | Every live task, with its subtasks and tags |
+| GET | `/tasks` | Every live task, with its subtasks, tags and `boss` (`null` unless P1) |
 | POST | `/tasks` | Create a task (`title`, optional `notes`, `priority` 1–4, `energy`, `dueOn`) |
 | PATCH | `/tasks/:id` | Update any task field, including `status` (`todo` / `doing` / `done`) |
 | DELETE | `/tasks/:id` | Soft-delete a task |
@@ -40,3 +40,10 @@ Run `bun run migrate` in `overdo-db` first.
 Completing a task pays `10 + (4 − priority) × 5`, plus 5 for medium energy, 10 for high, and a random
 0–30 for chaotic. Reopening a task claws back exactly what its last completion paid. Each level costs
 100 XP more than the one before it.
+
+## Boss battles
+
+Every P1 task is a boss: `{ name, hp, maxHp, bounty }`, named from a hash of its id so the name never
+changes. It has one HP per subtask plus one; each ticked subtask lands a hit, and completing the task
+finishes it off whatever HP is left, paying the `bounty` (50 XP) on top of the normal payout. Reopening
+claws the bounty back with the rest.

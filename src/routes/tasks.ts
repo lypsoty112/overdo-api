@@ -2,9 +2,11 @@
 // so all four return the same camelCase shape, subtasks and tags folded in as JSON arrays. toColumns maps
 // a validated body onto snake_case columns, dropping absent fields so a PATCH only touches what it names.
 // Deletes are soft (deleted_at); liveTaskExists is the check other routes run before writing to a task.
-// Moving a task into or out of "done" stamps completed_at and pays or claws back its XP.
+// Moving a task into or out of "done" stamps completed_at and pays or claws back its XP, plus the boss
+// bonus when the task is a P1 boss.
 import type postgres from "postgres";
 import { z } from "zod";
+import { BOSS_BONUS, bossFor } from "../bosses";
 import { sql } from "../db";
 import { notFound, parseBody } from "../http";
 import { awardXp, completionPoints, revokeCompletion } from "../xp";
@@ -22,6 +24,13 @@ const createSchema = fields.partial().required({ title: true });
 const updateSchema = fields.partial().refine((body) => Object.keys(body).length > 0, "nothing to update");
 
 type TaskInput = z.output<typeof updateSchema>;
+type TaskRow = postgres.Row & {
+  id: string;
+  status: string;
+  priority: number;
+  energy: string;
+  subtasks: { done: boolean }[];
+};
 
 function toColumns(body: TaskInput): Record<string, unknown> {
   const columns = {
@@ -35,8 +44,8 @@ function toColumns(body: TaskInput): Record<string, unknown> {
   return Object.fromEntries(Object.entries(columns).filter(([, value]) => value !== undefined));
 }
 
-function selectTasks(where: postgres.Fragment) {
-  return sql`
+async function selectTasks(where: postgres.Fragment) {
+  const rows = await sql<TaskRow[]>`
     SELECT t.id, t.title, t.notes, t.status, t.priority, t.energy,
       to_char(t.due_on, 'YYYY-MM-DD') AS "dueOn",
       t.created_at AS "createdAt",
@@ -52,6 +61,7 @@ function selectTasks(where: postgres.Fragment) {
     FROM tasks t
     WHERE t.deleted_at IS NULL AND ${where}
     ORDER BY t.created_at`;
+  return rows.map((task) => ({ ...task, boss: bossFor(task) }));
 }
 
 export async function liveTaskExists(id: string): Promise<boolean> {
@@ -91,6 +101,7 @@ export async function updateTask(req: Request, id: string): Promise<Response> {
   await sql`UPDATE tasks SET ${sql(columns)} WHERE id = ${id}`;
   const [task] = await selectTasks(sql`t.id = ${id}`);
   if (completing && task) await awardXp(id, "completed", completionPoints(task.priority, task.energy));
+  if (completing && task?.boss) await awardXp(id, "boss_defeated", BOSS_BONUS);
   if (reopening) await revokeCompletion(id);
   return Response.json(task);
 }
