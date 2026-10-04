@@ -1,0 +1,22 @@
+{
+  "name": "overdo-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "start": "bun run src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "format": "biome check --write ."
+  },
+  "dependencies": {
+    "postgres": "^3.4.9",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.15",
+    "@types/bun": "^1.4.2",
+    "typescript": "^7.0.2"
+  }
+}
