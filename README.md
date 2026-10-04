@@ -28,3 +28,14 @@ Run `bun run migrate` in `overdo-db` first.
 | GET | `/tags` | Every tag ever used |
 | POST | `/tasks/:id/tags` | Tag a task (`name`); creates the tag on first use |
 | DELETE | `/tasks/:id/tags/:tagId` | Untag a task |
+| POST | `/tasks/:id/pomodoros` | Start a focus session (`minutes`, default 25); stops any other and moves the task to `doing` |
+| GET | `/pomodoros/current` | The running session, or `null` |
+| POST | `/pomodoros/:id/stop` | Stop a session; a full-length one pays 1 XP per minute |
+| POST | `/moods` | Log a mood (`ecstatic` / `fine` / `meh` / `drained` / `feral`, optional `taskId`) |
+| GET | `/stats` | XP, level, streak, today's totals and the procrastination index |
+
+## XP
+
+Completing a task pays `10 + (4 − priority) × 5`, plus 5 for medium energy, 10 for high, and a random
+0–30 for chaotic. Reopening a task claws back exactly what its last completion paid. Each level costs
+100 XP more than the one before it.

@@ -2,10 +2,12 @@
 // so all four return the same camelCase shape, subtasks and tags folded in as JSON arrays. toColumns maps
 // a validated body onto snake_case columns, dropping absent fields so a PATCH only touches what it names.
 // Deletes are soft (deleted_at); liveTaskExists is the check other routes run before writing to a task.
+// Moving a task into or out of "done" stamps completed_at and pays or claws back its XP.
 import type postgres from "postgres";
 import { z } from "zod";
 import { sql } from "../db";
 import { notFound, parseBody } from "../http";
+import { awardXp, completionPoints, revokeCompletion } from "../xp";
 
 const fields = z.object({
   title: z.string().trim().min(1, "must be a non-empty string"),
@@ -88,6 +90,8 @@ export async function updateTask(req: Request, id: string): Promise<Response> {
 
   await sql`UPDATE tasks SET ${sql(columns)} WHERE id = ${id}`;
   const [task] = await selectTasks(sql`t.id = ${id}`);
+  if (completing && task) await awardXp(id, "completed", completionPoints(task.priority, task.energy));
+  if (reopening) await revokeCompletion(id);
   return Response.json(task);
 }
 

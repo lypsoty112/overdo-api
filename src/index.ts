@@ -2,6 +2,9 @@
 // path and method to a handler in routes/. The error handler turns Postgres rejecting a malformed id
 // into a 400 rather than a 500; anything else is logged and returned as a 500.
 import postgres from "postgres";
+import { logMood } from "./routes/moods";
+import { currentPomodoro, startPomodoro, stopPomodoro } from "./routes/pomodoros";
+import { getStats } from "./routes/stats";
 import { createSubtask, deleteSubtask, updateSubtask } from "./routes/subtasks";
 import { addTag, listTags, removeTag } from "./routes/tags";
 import { createTask, deleteTask, listTasks, updateTask } from "./routes/tasks";
@@ -35,6 +38,21 @@ Bun.serve({
     },
     "/tasks/:id/tags/:tagId": {
       DELETE: (req) => removeTag(req.params.id, req.params.tagId),
+    },
+    "/tasks/:id/pomodoros": {
+      POST: (req) => startPomodoro(req, req.params.id),
+    },
+    "/pomodoros/current": {
+      GET: () => currentPomodoro(),
+    },
+    "/pomodoros/:id/stop": {
+      POST: (req) => stopPomodoro(req.params.id),
+    },
+    "/moods": {
+      POST: (req) => logMood(req),
+    },
+    "/stats": {
+      GET: () => getStats(),
     },
   },
   fetch() {
