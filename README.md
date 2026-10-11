@@ -34,6 +34,7 @@ Run `bun run migrate` in `overdo-db` first.
 | POST | `/moods` | Log a mood (`ecstatic` / `fine` / `meh` / `drained` / `feral`, optional `taskId`) |
 | GET | `/stats` | XP, level, streak, today's totals and the procrastination index |
 | GET | `/horoscope` | Today's task horoscope; the same for everyone until midnight UTC |
+| GET | `/achievements` | Every achievement, with `unlockedAt` (`null` while locked) |
 
 ## XP
 
@@ -47,3 +48,22 @@ Every P1 task is a boss: `{ name, hp, maxHp, bounty }`, named from a hash of its
 changes. It has one HP per subtask plus one; each ticked subtask lands a hit, and completing the task
 finishes it off whatever HP is left, paying the `bounty` (50 XP) on top of the normal payout. Reopening
 claws the bounty back with the rest.
+
+## Achievements
+
+Eight achievements, listed in `src/achievements.ts`, each with its own SQL condition over tasks, focus
+sessions and moods. Completing a task, finishing a full-length focus session and logging a mood all
+check every condition and unlock the ones that hold. Unlocks are permanent and pay no XP; reopening or
+deleting a task takes nothing back, and activity from before an achievement existed counts. Times use
+the database clock, so "before noon" is noon in the database's time zone.
+
+| Achievement | Unlocks when |
+| --- | --- |
+| 🩸 First blood | A task is completed |
+| 🐦 Early bird | A P1 is completed before noon |
+| ⚔️ Boss slayer | Three P1s are completed |
+| 🎩 Hat trick | Three tasks are completed on the same day |
+| 🦉 Night owl | A task is completed between midnight and 5 a.m. |
+| 🐌 Fashionably late | A task is completed seven or more days after its due date |
+| 🍅 Tomato farmer | Four full-length focus sessions end on the same day |
+| 🐺 Unleashed | A `feral` mood is logged |

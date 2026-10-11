@@ -1,5 +1,7 @@
-// Mood check-ins: logMood records how someone feels, optionally blaming a specific task for it.
+// Mood check-ins: logMood records how someone feels, optionally blaming a specific task for it, then
+// checks for achievements a mood can unlock.
 import { z } from "zod";
+import { unlockAchievements } from "../achievements";
 import { sql } from "../db";
 import { notFound, parseBody } from "../http";
 import { liveTaskExists } from "./tasks";
@@ -18,5 +20,6 @@ export async function logMood(req: Request): Promise<Response> {
   const [log] = await sql`
     INSERT INTO mood_logs (mood, task_id) VALUES (${mood}, ${taskId})
     RETURNING id, mood, task_id AS "taskId", logged_at AS "loggedAt"`;
+  await unlockAchievements();
   return Response.json(log, { status: 201 });
 }

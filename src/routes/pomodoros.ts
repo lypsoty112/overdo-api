@@ -1,7 +1,8 @@
 // Focus sessions: startPomodoro, currentPomodoro and stopPomodoro. Only one session runs at a time, so
 // starting one stops any other and moves its task to "doing". Stopping a session that lasted its full
-// planned length pays one XP per planned minute; stopping early pays nothing.
+// planned length pays one XP per planned minute and checks for achievements; stopping early pays nothing.
 import { z } from "zod";
+import { unlockAchievements } from "../achievements";
 import { sql } from "../db";
 import { notFound, parseBody } from "../http";
 import { awardXp } from "../xp";
@@ -42,5 +43,6 @@ export async function stopPomodoro(id: string): Promise<Response> {
   if (!session) return notFound("running session");
 
   if (session.finished) await awardXp(session.taskId, "focus", session.plannedMinutes);
+  if (session.finished) await unlockAchievements();
   return Response.json(session);
 }

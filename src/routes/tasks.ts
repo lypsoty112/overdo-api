@@ -3,9 +3,10 @@
 // a validated body onto snake_case columns, dropping absent fields so a PATCH only touches what it names.
 // Deletes are soft (deleted_at); liveTaskExists is the check other routes run before writing to a task.
 // Moving a task into or out of "done" stamps completed_at and pays or claws back its XP, plus the boss
-// bonus when the task is a P1 boss.
+// bonus when the task is a P1 boss; completing one also unlocks any achievements it earned.
 import type postgres from "postgres";
 import { z } from "zod";
+import { unlockAchievements } from "../achievements";
 import { BOSS_BONUS, bossFor } from "../bosses";
 import { sql } from "../db";
 import { notFound, parseBody } from "../http";
@@ -102,6 +103,7 @@ export async function updateTask(req: Request, id: string): Promise<Response> {
   const [task] = await selectTasks(sql`t.id = ${id}`);
   if (completing && task) await awardXp(id, "completed", completionPoints(task.priority, task.energy));
   if (completing && task?.boss) await awardXp(id, "boss_defeated", BOSS_BONUS);
+  if (completing) await unlockAchievements();
   if (reopening) await revokeCompletion(id);
   return Response.json(task);
 }

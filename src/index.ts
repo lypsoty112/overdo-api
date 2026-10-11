@@ -2,6 +2,7 @@
 // path and method to a handler in routes/. The error handler turns Postgres rejecting a malformed id
 // into a 400 rather than a 500; anything else is logged and returned as a 500.
 import postgres from "postgres";
+import { listAchievements } from "./routes/achievements";
 import { getHoroscope } from "./routes/horoscope";
 import { logMood } from "./routes/moods";
 import { currentPomodoro, startPomodoro, stopPomodoro } from "./routes/pomodoros";
@@ -57,6 +58,9 @@ Bun.serve({
     },
     "/horoscope": {
       GET: () => getHoroscope(),
+    },
+    "/achievements": {
+      GET: () => listAchievements(),
     },
   },
   fetch() {
